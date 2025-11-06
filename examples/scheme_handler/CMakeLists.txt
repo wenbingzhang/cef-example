@@ -140,6 +140,11 @@ if(OS_MAC)
   # Copy the CEF framework into the Frameworks directory and create the necessary symlinks.
   COPY_MAC_FRAMEWORK("${EXAMPLE_TARGET}" "${CEF_BINARY_DIR}" "${EXAMPLE_APP}")
 
+  # Save main app variables to restore later
+  set(_main_executable_name "${EXECUTABLE_NAME}")
+  set(_main_product_name "${PRODUCT_NAME}")
+  set(_main_version_short "${VERSION_SHORT}")
+
   # Create the multiple Helper app bundle targets.
   foreach(_suffix_list ${CEF_HELPER_APP_SUFFIXES})
     # Convert to a list and extract the suffix values.
@@ -162,7 +167,7 @@ if(OS_MAC)
     set(BUNDLE_ID_SUFFIX "${_plist_suffix}")
     set(VERSION_SHORT "1.0")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/helper-Info.plist.in"
-                   "${_helper_info_plist}" @ONLY)
+                   "${_helper_info_plist}")
 
     # Create Helper executable target.
     add_executable(${_helper_target} MACOSX_BUNDLE ${EXAMPLE_HELPER_SRCS})
@@ -173,6 +178,11 @@ if(OS_MAC)
       MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
       OUTPUT_NAME ${_helper_output_name}
       )
+
+    # Restore main app variables for next iteration
+    set(EXECUTABLE_NAME "${_main_executable_name}")
+    set(PRODUCT_NAME "${_main_product_name}")
+    set(VERSION_SHORT "${_main_version_short}")
 
     # Add the Helper as a dependency of the main executable target.
     add_dependencies(${EXAMPLE_TARGET} "${_helper_target}")
