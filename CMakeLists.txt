@@ -112,21 +112,143 @@ add_subdirectory(${CEF_ROOT}/tests/ceftests)
 # Allow includes relative to the current source directory.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# Configure building of the examples.
-option(WITH_EXAMPLES "Enable or disable building of examples." ON)
-if(WITH_EXAMPLES)
-  # Include example application targets.
-  add_subdirectory(examples)
+# Include application targets.
+# add_subdirectory(src) # This will be added below after platform detection
+
+#
+# Platform detection.
+#
+
+if(WIN32)
+  set(OS_WINDOWS TRUE)
+elseif(APPLE)
+  set(OS_MAC TRUE)
+  set(OS_MACOSX TRUE)
+else()
+  set(OS_LINUX TRUE)
 endif()
 
-# TODO: Include other application targets here.
+
+#
+# Shared resources. These are included by the individual executable targets so
+# the paths must be relative to those directories.
+#
+
+if(OS_MAC)
+  # Shared macOS resources (menus, icons, etc).
+  set(SHARED_RESOURCES_SRCS
+    src/shared/mac/English.lproj/InfoPlist.strings
+    src/shared/mac/English.lproj/MainMenu.xib
+    src/shared/mac/shared.icns
+    )
+
+  # Info.plist files used for main and helper app bundles.
+  set(SHARED_INFO_PLIST src/shared/mac/Info.plist.in)
+  set(SHARED_HELPER_INFO_PLIST src/shared/mac/helper-Info.plist.in)
+elseif(OS_WINDOWS)
+  # Shared Windows resources (version information, icons).
+  set(SHARED_RESOURCES_SRCS
+    src/shared/win/big.ico
+    src/shared/win/resource.h
+    src/shared/win/small.ico
+    )
+
+  # Manifest files used for executables.
+  set(SHARED_EXE_MANIFEST src/shared/win/shared.exe.manifest)
+  set(SHARED_COMPATIBILITY_MANIFEST src/shared/win/compatibility.manifest)
+endif()
+
+
+#
+# Shared configuration.
+#
+
+# Support nice project/target organization in Visual Studio and Xcode.
+if(OS_MACOSX OR OS_WINDOWS)
+  # Enable the creation of project folders.
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+  # Group target contents by directory.
+  macro(SET_EXAMPLE_SOURCE_GROUPS srcs)
+    foreach(FILE ${srcs})
+      # Get the absolute directory path.
+      get_filename_component(ABS_FILE "${FILE}" ABSOLUTE)
+      get_filename_component(PARENT_DIR "${ABS_FILE}" DIRECTORY)
+
+      # Remove the common directory prefix. What remains in the group.
+      string(REPLACE "${CMAKE_SOURCE_DIR}/" "" GROUP "${PARENT_DIR}")
+
+      # Convert to Windows slashes.
+      string(REPLACE "/" "\\" GROUP "${GROUP}")
+
+      source_group("${GROUP}" FILES "${FILE}")
+    endforeach()
+  endmacro()
+endif()
+
+# Set the configuration-specific binary output directory.
+if(GEN_NINJA OR GEN_MAKEFILES)
+  # Force Ninja and Make to create a subdirectory named after the configuration.
+  set(EXAMPLE_TARGET_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+  set(EXAMPLE_TARGET_OUT_DIR "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+endif()
+set(CEF_TARGET_OUT_DIR "${EXAMPLE_TARGET_OUT_DIR}")
+
+# Set properties common to all example targets.
+macro(SET_EXAMPLE_PROPERTIES target)
+  # Output all binaries to the configuration-specific build directory.
+  set_target_properties(${target} PROPERTIES
+                        ARCHIVE_OUTPUT_DIRECTORY "${EXAMPLE_TARGET_OUT_DIR}"
+                        RUNTIME_OUTPUT_DIRECTORY "${EXAMPLE_TARGET_OUT_DIR}"
+                        LIBRARY_OUTPUT_DIRECTORY "${EXAMPLE_TARGET_OUT_DIR}")
+
+  if(OS_MACOSX OR OS_WINDOWS)
+    # Place the target in the "examples" folder in Visual Studio and Xcode.
+    set_property(TARGET ${target} PROPERTY FOLDER "examples")
+  endif()
+endmacro()
+
+# Set properties on an example library target.
+macro(SET_EXAMPLE_LIBRARY_TARGET_PROPERTIES target)
+  SET_LIBRARY_TARGET_PROPERTIES(${target})
+  SET_EXAMPLE_PROPERTIES(${target})
+endmacro()
+
+# Set properties on an example executable target.
+macro(SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES target)
+  SET_EXECUTABLE_TARGET_PROPERTIES(${target})
+  SET_EXAMPLE_PROPERTIES(${target})
+
+  if(OS_LINUX)
+    # Set rpath so that libraries can be placed next to the executable.
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(${target} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+  elseif(OS_WINDOWS)
+    # Add the custom Windows manifest files to the executable.
+    add_custom_command(
+      TARGET ${target}
+      POST_BUILD
+      COMMAND "mt.exe" -nologo
+              -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_EXE_MANIFEST}\"
+                        \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_COMPATIBILITY_MANIFEST}\"
+              -outputresource:"${EXAMPLE_TARGET_OUT_DIR}/${target}.exe"\;\#1
+      COMMENT "Adding manifest..."
+      )
+  endif()
+endmacro()
+
+
+#
+# Target configuration.
+#
+
+# Static library shared by all example executable targets.
+add_subdirectory(src/shared)
+
+# Example executable targets.
+add_subdirectory(src)
+
 
 # Display configuration settings.
 PRINT_CEF_CONFIG()
-
-if(NOT WITH_EXAMPLES)
-  message(STATUS "")
-  message(STATUS "NOTE: Targets from the examples folder are not included.")
-  message(STATUS "Add -DWITH_EXAMPLES=On to the CMake command-line to include them.")
-  message(STATUS "")
-endif()

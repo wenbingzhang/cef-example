@@ -82,10 +82,10 @@ endif()
 #
 
 # Target executable names.
-set(EXAMPLE_TARGET "scheme_handler")
+set(EXAMPLE_TARGET "${PROJECT_NAME}")
 if(OS_MAC)
-  set(EXAMPLE_HELPER_TARGET "scheme_handler_Helper")
-  set(EXAMPLE_HELPER_OUTPUT_NAME "scheme_handler Helper")
+  set(EXAMPLE_HELPER_TARGET "${PROJECT_NAME}_Helper")
+  set(EXAMPLE_HELPER_OUTPUT_NAME "${PROJECT_NAME} Helper")
 endif()
 
 
