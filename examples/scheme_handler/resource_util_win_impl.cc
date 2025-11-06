@@ -2,9 +2,9 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "examples/shared/resource_util.h"
+#include "shared/resource_util.h"
 
-#include "examples/scheme_handler/resource.h"
+#include "resource.h"
 
 namespace shared {
 

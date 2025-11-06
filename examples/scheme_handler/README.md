@@ -10,7 +10,7 @@ The "scheme_handler" target is implemented as follows:
 
  * Define the target-specific [CMake](https://cmake.org/) build configuration in the [CMakeLists.txt](CMakeLists.txt) file.
  * Call the shared [entry point functions](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-entry-point-function) that initialize, run and shut down CEF.
-     * Uses the [minimal target](../minimal) implementation.
+     * Uses a minimal client implementation based on the original minimal target.
  * Implement the [shared::Create*ProcessApp](../shared/app_factory.h) functions to create a [CefApp](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefapp) instance appropriate to the [process type](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-processes).
      * Browser process: [app_browser_impl.cc](app_browser_impl.cc) implements the `shared::CreateBrowserProcessApp` method.
          * Register the custom scheme name in [OnRegisterCustomSchemes](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-request-handling).
@@ -19,7 +19,7 @@ The "scheme_handler" target is implemented as follows:
      * Other processes: [app_subprocess_impl.cc](app_subprocess_impl.cc) implements the `shared::CreateRendererProcessApp` and `shared::CreateOtherProcessApp` methods.
          * Register the custom scheme name in [OnRegisterCustomSchemes](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-request-handling).
  * Provide a concrete [CefClient](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefclient) implementation to handle [CefBrowser](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefbrowser-and-cefframe) callbacks.
-      * Uses the [minimal target](../minimal) implementation.
+      * Uses a minimal client implementation based on the original minimal target.
  * Windows resource loading implementation in [resource_util_win_impl.cc](resource_util_win_impl.cc) and [resource.rc](win/resource.rc).
      * Implements the [shared::GetResourceId](../shared/resource_util.h) method to map resource paths to BINARY ID values.
      * Defines a BINARY resource to include [logo.png](resources/logo.png) and [scheme_handler.html](resources/scheme_handler.html) in the executable.

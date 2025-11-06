@@ -2,7 +2,7 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "examples/scheme_handler/scheme_handler_impl.h"
+#include "scheme_handler_impl.h"
 
 #include "include/cef_browser.h"
 #include "include/cef_callback.h"
@@ -13,9 +13,9 @@
 #include "include/cef_scheme.h"
 #include "include/wrapper/cef_helpers.h"
 
-#include "examples/scheme_handler/scheme_strings.h"
-#include "examples/shared/client_util.h"
-#include "examples/shared/resource_util.h"
+#include "scheme_strings.h"
+#include "shared/client_util.h"
+#include "shared/resource_util.h"
 
 namespace scheme_handler {
 

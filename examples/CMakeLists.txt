@@ -10,25 +10,25 @@
 if(OS_MAC)
   # Shared macOS resources (menus, icons, etc).
   set(SHARED_RESOURCES_SRCS
-    ../shared/mac/English.lproj/InfoPlist.strings
-    ../shared/mac/English.lproj/MainMenu.xib
-    ../shared/mac/shared.icns
+    scheme_handler/shared/mac/English.lproj/InfoPlist.strings
+    scheme_handler/shared/mac/English.lproj/MainMenu.xib
+    scheme_handler/shared/mac/shared.icns
     )
 
   # Info.plist files used for main and helper app bundles.
-  set(SHARED_INFO_PLIST ../shared/mac/Info.plist.in)
-  set(SHARED_HELPER_INFO_PLIST ../shared/mac/helper-Info.plist.in)
+  set(SHARED_INFO_PLIST scheme_handler/shared/mac/Info.plist.in)
+  set(SHARED_HELPER_INFO_PLIST scheme_handler/shared/mac/helper-Info.plist.in)
 elseif(OS_WINDOWS)
   # Shared Windows resources (version information, icons).
   set(SHARED_RESOURCES_SRCS
-    ../shared/win/big.ico
-    ../shared/win/resource.h
-    ../shared/win/small.ico
+    scheme_handler/shared/win/big.ico
+    scheme_handler/shared/win/resource.h
+    scheme_handler/shared/win/small.ico
     )
 
   # Manifest files used for executables.
-  set(SHARED_EXE_MANIFEST ../shared/win/shared.exe.manifest)
-  set(SHARED_COMPATIBILITY_MANIFEST ../shared/win/compatibility.manifest)
+  set(SHARED_EXE_MANIFEST scheme_handler/shared/win/shared.exe.manifest)
+  set(SHARED_COMPATIBILITY_MANIFEST scheme_handler/shared/win/compatibility.manifest)
 endif()
 
 
@@ -103,8 +103,8 @@ macro(SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES target)
       TARGET ${target}
       POST_BUILD
       COMMAND "mt.exe" -nologo
-              -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_EXE_MANIFEST}\"
-                        \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_COMPATIBILITY_MANIFEST}\"
+              -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/scheme_handler/shared/win/shared.exe.manifest\"
+                        \"${CMAKE_CURRENT_SOURCE_DIR}/scheme_handler/shared/win/compatibility.manifest\"
               -outputresource:"${EXAMPLE_TARGET_OUT_DIR}/${target}.exe"\;\#1
       COMMENT "Adding manifest..."
       )
@@ -117,10 +117,7 @@ endmacro()
 #
 
 # Static library shared by all example executable targets.
-add_subdirectory(shared)
+add_subdirectory(scheme_handler/shared)
 
 # Example executable targets.
-add_subdirectory(message_router)
-add_subdirectory(minimal)
-add_subdirectory(resource_manager)
 add_subdirectory(scheme_handler)

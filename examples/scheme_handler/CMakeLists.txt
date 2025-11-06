@@ -15,9 +15,9 @@ set(EXAMPLE_COMMON_SRCS
 # Main executable sources.
 set(EXAMPLE_SRCS
   ${EXAMPLE_COMMON_SRCS}
-  ../minimal/client_minimal.cc
-  ../minimal/client_minimal.h
-  ../minimal/main_minimal.cc
+  client.cc
+  client.h
+  main.cc
   app_browser_impl.cc
   scheme_handler_impl.cc
   scheme_handler_impl.h
@@ -38,7 +38,7 @@ elseif(OS_MAC)
   # On macOS a separate helper executable is used for subprocesses.
   set(EXAMPLE_HELPER_SRCS
     ${EXAMPLE_COMMON_SRCS}
-    ../minimal/process_helper_mac_minimal.cc
+    process_helper_mac.cc
     app_subprocess_impl.cc
     )
 endif()
@@ -56,9 +56,23 @@ APPEND_PLATFORM_SOURCES(EXAMPLE_RESOURCES_SRCS)
 
 if(OS_MACOSX OR OS_WINDOWS)
   # On macOS and Windows include the scheme_handler and shared resources.
+  if(OS_MAC)
+    set(EXAMPLE_SHARED_RESOURCES_SRCS
+      shared/mac/English.lproj/InfoPlist.strings
+      shared/mac/English.lproj/MainMenu.xib
+      shared/mac/shared.icns
+      )
+  elseif(OS_WINDOWS)
+    set(EXAMPLE_SHARED_RESOURCES_SRCS
+      shared/win/big.ico
+      shared/win/resource.h
+      shared/win/small.ico
+      )
+  endif()
+
   set(EXAMPLE_RESOURCES_SRCS
     ${EXAMPLE_RESOURCES_SRCS}
-    ${SHARED_RESOURCES_SRCS}
+    ${EXAMPLE_SHARED_RESOURCES_SRCS}
     )
 endif()
 
@@ -106,6 +120,12 @@ if(OS_MAC)
   # Variables referenced from the main Info.plist file.
   set(EXECUTABLE_NAME "${EXAMPLE_TARGET}")
   set(PRODUCT_NAME "${EXAMPLE_TARGET}")
+  set(VERSION_SHORT "1.0")
+
+  # Configure the Info.plist file.
+  set(INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/Info.plist.in"
+                 "${INFO_PLIST}" @ONLY)
 
   # Main app bundle target.
   add_executable(${EXAMPLE_TARGET} MACOSX_BUNDLE ${EXAMPLE_SRCS} ${EXAMPLE_RESOURCES_SRCS})
@@ -114,7 +134,7 @@ if(OS_MAC)
   target_link_libraries(${EXAMPLE_TARGET} shared)
   set_target_properties(${EXAMPLE_TARGET} PROPERTIES
     RESOURCE "${EXAMPLE_RESOURCES_SRCS}"
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_INFO_PLIST}"
+    MACOSX_BUNDLE_INFO_PLIST "${INFO_PLIST}"
     )
 
   # Copy the CEF framework into the Frameworks directory and create the necessary symlinks.
@@ -136,12 +156,13 @@ if(OS_MAC)
     # manually because the configure_file command (which is executed as part of
     # MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
     # wrong values with multiple targets.
-    set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist.in")
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_HELPER_INFO_PLIST}" _plist_contents)
-    string(REPLACE "\${EXECUTABLE_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
-    string(REPLACE "\${PRODUCT_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
-    string(REPLACE "\${BUNDLE_ID_SUFFIX}" "${_plist_suffix}" _plist_contents ${_plist_contents})
-    file(WRITE ${_helper_info_plist} ${_plist_contents})
+    set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist")
+    set(EXECUTABLE_NAME "${_helper_output_name}")
+    set(PRODUCT_NAME "${_helper_output_name}")
+    set(BUNDLE_ID_SUFFIX "${_plist_suffix}")
+    set(VERSION_SHORT "1.0")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/helper-Info.plist.in"
+                   "${_helper_info_plist}" @ONLY)
 
     # Create Helper executable target.
     add_executable(${_helper_target} MACOSX_BUNDLE ${EXAMPLE_HELPER_SRCS})
@@ -172,7 +193,7 @@ if(OS_MAC)
   # directive but that doesn't properly handle nested resource directories.
   # Remove these prefixes from input file paths.
   set(PREFIXES
-    "../shared/mac/"
+    "shared/mac/"
     )
   COPY_MAC_RESOURCES("${EXAMPLE_RESOURCES_SRCS}" "${PREFIXES}" "${EXAMPLE_TARGET}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_APP}")
 endif()

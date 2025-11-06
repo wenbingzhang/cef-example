@@ -4,13 +4,13 @@
 
 #include <sstream>
 
-#include "examples/shared/app_factory.h"
+#include "shared/app_factory.h"
 
-#include "examples/minimal/client_minimal.h"
-#include "examples/scheme_handler/scheme_handler_impl.h"
-#include "examples/scheme_handler/scheme_strings.h"
-#include "examples/shared/browser_util.h"
-#include "examples/shared/resource_util.h"
+#include "client.h"
+#include "scheme_handler_impl.h"
+#include "scheme_strings.h"
+#include "shared/browser_util.h"
+#include "shared/resource_util.h"
 
 namespace scheme_handler {
 
