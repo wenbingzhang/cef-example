@@ -6,7 +6,7 @@
 
 #include "scheme_strings.h"
 
-namespace scheme_handler {
+namespace app {
 
 // Implementation of CefApp for all subprocesses.
 class SubprocessApp : public CefApp {
@@ -26,16 +26,16 @@ class SubprocessApp : public CefApp {
   DISALLOW_COPY_AND_ASSIGN(SubprocessApp);
 };
 
-}  // namespace scheme_handler
+}  // namespace app
 
 namespace shared {
 
 CefRefPtr<CefApp> CreateRendererProcessApp() {
-  return new scheme_handler::SubprocessApp();
+  return new app::SubprocessApp();
 }
 
 CefRefPtr<CefApp> CreateOtherProcessApp() {
-  return new scheme_handler::SubprocessApp();
+  return new app::SubprocessApp();
 }
 
 }  // namespace shared

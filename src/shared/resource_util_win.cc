@@ -4,48 +4,47 @@
 
 #include "resource_util.h"
 
+#include <windows.h>
+#include <shlwapi.h>
+#include <stdio.h>
+
 #include "include/base/cef_logging.h"
-#include "include/wrapper/cef_byte_read_handler.h"
 #include "include/wrapper/cef_stream_resource_handler.h"
+
+#pragma comment(lib, "shlwapi.lib")
 
 namespace shared {
 
 namespace {
 
-// Returns the module handle that contains this code. When built as a DLL this
-// will be the DLL handle instead of the EXE handle.
-HINSTANCE GetCodeModuleHandle() {
-  HMODULE hModule = nullptr;
-  CHECK(::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                            reinterpret_cast<LPCWSTR>(GetCodeModuleHandle),
-                            &hModule));
-  return hModule;
-}
-
-// Retrieve the contents of a BINARY resource from the current executable.
-bool LoadBinaryResource(int binaryId, DWORD& dwSize, LPBYTE& pBytes) {
-  HINSTANCE hInst = GetCodeModuleHandle();
-  HRSRC hRes =
-      FindResource(hInst, MAKEINTRESOURCE(binaryId), MAKEINTRESOURCE(256));
-  if (hRes) {
-    HGLOBAL hGlob = LoadResource(hInst, hRes);
-    if (hGlob) {
-      dwSize = SizeofResource(hInst, hRes);
-      pBytes = (LPBYTE)LockResource(hGlob);
-      if (dwSize > 0 && pBytes)
-        return true;
-    }
+bool FileExists(const char* path) {
+  FILE* f = fopen(path, "rb");
+  if (f) {
+    fclose(f);
+    return true;
   }
-
   return false;
 }
 
-// Provider implementation for loading BINARY resources from the current
-// executable.
-class BinaryResourceProvider : public CefResourceManager::Provider {
+bool ReadFileToString(const char* path, std::string& data) {
+  // Implementation adapted from base/file_util.cc
+  FILE* file = fopen(path, "rb");
+  if (!file)
+    return false;
+
+  char buf[1 << 16];
+  size_t len;
+  while ((len = fread(buf, 1, sizeof(buf), file)) > 0)
+    data.append(buf, len);
+  fclose(file);
+
+  return true;
+}
+
+// Provider implementation for loading file resources from the filesystem.
+class FileResourceProvider : public CefResourceManager::Provider {
  public:
-  explicit BinaryResourceProvider(const std::string& root_url)
+  explicit FileResourceProvider(const std::string& root_url)
       : root_url_(root_url) {
     DCHECK(!root_url.empty());
   }
@@ -78,49 +77,58 @@ class BinaryResourceProvider : public CefResourceManager::Provider {
  private:
   std::string root_url_;
 
-  DISALLOW_COPY_AND_ASSIGN(BinaryResourceProvider);
+  DISALLOW_COPY_AND_ASSIGN(FileResourceProvider);
 };
 
 }  // namespace
 
+// Retrieve the directory containing resource files on Windows.
+bool GetResourceDir(std::string& dir) {
+  char path[MAX_PATH];
+
+  // Get the path to the current executable.
+  if (GetModuleFileNameA(NULL, path, MAX_PATH) == 0) {
+    return false;
+  }
+
+  // Remove the executable name to get the directory.
+  PathRemoveFileSpecA(path);
+
+  // Append "resources" subdirectory.
+  strcat_s(path, "\\resources");
+  dir = std::string(path);
+  return true;
+}
+
 CefResourceManager::Provider* CreateBinaryResourceProvider(
     const std::string& url_path) {
-  return new BinaryResourceProvider(url_path);
+  return new FileResourceProvider(url_path);
 }
 
 bool GetResourceString(const std::string& resource_path,
                        std::string& out_data) {
-  int resource_id = GetResourceId(resource_path);
-  if (resource_id == 0)
+  std::string path;
+  if (!GetResourceDir(path))
     return false;
 
-  DWORD dwSize;
-  LPBYTE pBytes;
+  path.append("\\");
+  path.append(resource_path);
 
-  if (LoadBinaryResource(resource_id, dwSize, pBytes)) {
-    out_data = std::string(reinterpret_cast<char*>(pBytes), dwSize);
-    return true;
-  }
-
-  NOTREACHED();  // The resource should be found.
-  return false;
+  return ReadFileToString(path.c_str(), out_data);
 }
 
 CefRefPtr<CefStreamReader> GetResourceReader(const std::string& resource_path) {
-  int resource_id = GetResourceId(resource_path);
-  if (resource_id == 0)
+  std::string path;
+  if (!GetResourceDir(path))
     return nullptr;
 
-  DWORD dwSize;
-  LPBYTE pBytes;
+  path.append("\\");
+  path.append(resource_path);
 
-  if (LoadBinaryResource(resource_id, dwSize, pBytes)) {
-    return CefStreamReader::CreateForHandler(
-        new CefByteReadHandler(pBytes, dwSize, nullptr));
-  }
+  if (!FileExists(path.c_str()))
+    return nullptr;
 
-  NOTREACHED();  // The resource should be found.
-  return nullptr;
+  return CefStreamReader::CreateForFile(path);
 }
 
 }  // namespace shared

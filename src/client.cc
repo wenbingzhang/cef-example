@@ -6,7 +6,7 @@
 
 #include "shared/client_util.h"
 
-namespace minimal {
+namespace app {
 
 Client::Client() {}
 
@@ -31,4 +31,4 @@ void Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
   return shared::OnBeforeClose(browser);
 }
 
-}  // namespace minimal
+}  // namespace app

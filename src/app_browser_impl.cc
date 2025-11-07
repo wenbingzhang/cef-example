@@ -12,7 +12,7 @@
 #include "shared/browser_util.h"
 #include "shared/resource_util.h"
 
-namespace scheme_handler {
+namespace app {
 
 namespace {
 
@@ -60,7 +60,7 @@ class BrowserApp : public CefApp, public CefBrowserProcessHandler {
     RegisterSchemeHandlerFactory();
 
     // Create the browser window.
-    shared::CreateBrowser(new minimal::Client(), GetStartupURL(),
+    shared::CreateBrowser(new app::Client(), GetStartupURL(),
                           CefBrowserSettings());
   }
 
@@ -69,12 +69,12 @@ class BrowserApp : public CefApp, public CefBrowserProcessHandler {
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
 };
 
-}  // namespace scheme_handler
+}  // namespace app
 
 namespace shared {
 
 CefRefPtr<CefApp> CreateBrowserProcessApp() {
-  return new scheme_handler::BrowserApp();
+  return new app::BrowserApp();
 }
 
 }  // namespace shared

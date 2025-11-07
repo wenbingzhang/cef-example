@@ -22,10 +22,6 @@ set(EXAMPLE_SRCS
   scheme_handler_impl.cc
   scheme_handler_impl.h
   )
-set(EXAMPLE_SRCS_WINDOWS
-  resource.h
-  resource_util_win_impl.cc
-  )
 APPEND_PLATFORM_SOURCES(EXAMPLE_SRCS)
 
 if(OS_LINUX OR OS_WINDOWS)
@@ -48,10 +44,6 @@ set(EXAMPLE_RESOURCES_SRCS
   resources/logo.png
   resources/scheme_handler.html
   )
-set(EXAMPLE_RESOURCES_SRCS_WINDOWS
-  # Resources that embed the *.html and *.png files in the executable.
-  win/resource.rc
-  )
 APPEND_PLATFORM_SOURCES(EXAMPLE_RESOURCES_SRCS)
 
 if(OS_MACOSX OR OS_WINDOWS)
@@ -63,11 +55,7 @@ if(OS_MACOSX OR OS_WINDOWS)
       shared/mac/shared.icns
       )
   elseif(OS_WINDOWS)
-    set(EXAMPLE_SHARED_RESOURCES_SRCS
-      shared/win/big.ico
-      shared/win/resource.h
-      shared/win/small.ico
-      )
+    # No Windows-specific shared resources needed when using filesystem.
   endif()
 
   set(EXAMPLE_RESOURCES_SRCS
@@ -214,12 +202,6 @@ endif()
 #
 
 if(OS_WINDOWS)
-    # Add resources to the sources variable for convenience.
-  set(EXAMPLE_SRCS
-    ${EXAMPLE_SRCS}
-    ${EXAMPLE_RESOURCES_SRCS}
-    )
-
   # Create source groups for Visual Studio.
   SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_SRCS}")
 
@@ -244,4 +226,7 @@ if(OS_WINDOWS)
 
   add_dependencies(${EXAMPLE_TARGET} shared)
   target_link_libraries(${EXAMPLE_TARGET} shared)
+
+  # Copy resource files to the target output directory.
+  COPY_FILES("${EXAMPLE_TARGET}" "${EXAMPLE_RESOURCES_SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}/resources")
 endif()

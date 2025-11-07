@@ -16,17 +16,21 @@
 
 namespace shared {
 
-// This file provides functionality for resource loading. On Linux amd macOS
+// This file provides functionality for resource loading. On Linux, macOS, and Windows
 // resource files are loaded from a directory on the filesystem
 // ("<target>_files" sub-directory on Linux, app bundle Resources directory on
-// macOS). On Windows resource files are loaded from BINARY resources built into
-// the executable (see GetResourceId comments for details).
+// macOS, and "resources" sub-directory on Windows).
 
 // Origin for loading local test resources.
 extern const char kTestOrigin[];
 
 #if defined(OS_POSIX)
 // Retrieve the directory containing resource files on Linux and macOS.
+bool GetResourceDir(std::string& dir);
+#endif
+
+#if defined(OS_WIN)
+// Retrieve the directory containing resource files on Windows.
 bool GetResourceDir(std::string& dir);
 #endif
 
@@ -38,14 +42,7 @@ std::string GetResourcePath(const std::string& url);
 std::string GetMimeType(const std::string& resource_path);
 
 #if defined(OS_WIN)
-// Returns the BINARY id value associated with |resource_path| on Windows.
-// Implemented for individual executable targets as follows:
-// 1. Add the ID value in */resources/win/resource.h
-// 2. Add the ID to file path mapping in */resources/win/resource.rc
-// 2. Add the |resource_path| to ID mapping in */resource_util_win_impl.cc.
-int GetResourceId(const std::string& resource_path);
-
-// Create a new provider for loading BINARY resources on Windows. Only URLs
+// Create a new provider for loading file resources on Windows. Only URLs
 // beginning with |root_url| will be handled by this provider. See the
 // "resource_manager" target for example usage.
 CefResourceManager::Provider* CreateBinaryResourceProvider(

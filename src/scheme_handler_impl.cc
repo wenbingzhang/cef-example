@@ -17,7 +17,7 @@
 #include "shared/client_util.h"
 #include "shared/resource_util.h"
 
-namespace scheme_handler {
+namespace app {
 
 namespace {
 
@@ -135,4 +135,4 @@ void RegisterSchemeHandlerFactory() {
                                   new ClientSchemeHandlerFactory());
 }
 
-}  // namespace scheme_handler
+}  // namespace app

@@ -15,7 +15,7 @@ Executables that depend on this target are implemented as follows:
       * Windows implementation: [main_win.cc](main_win.cc) (single executable, all processes)
  * Implement the `shared::Create*ProcessApp` functions declared in [app_factory.h](app_factory.h) to create a [CefApp](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefapp) instance appropriate to the [process type](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-processes).
  * Provide a concrete [CefClient](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefclient) implementation to handle [CefBrowser](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefbrowser-and-cefframe) callbacks. A `shared::CreateBrowser` function is provided in [browser_util.h](browser_util.h) for convenience and will usually be called from the target-specific `CefBrowserProcessHandler::OnContextInitialized` implementation. 
- * Windows: When using resources compiled into the binary implement the `shared::GetResourceId` method declared in [resource_util.h](resource_util.h) to map resource paths to BINARY ID values.
+ * Windows: Resource files are loaded from a resources directory alongside the executable. The `shared::GetResourceDir` method declared in [resource_util.h](resource_util.h) handles resource directory location automatically.
 
 See the [minimal](../minimal) target for a minimal implementation example.
 See the [resource_manager](../resource_manager) target for a resource loading example.

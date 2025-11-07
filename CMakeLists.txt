@@ -146,16 +146,6 @@ if(OS_MAC)
   set(SHARED_INFO_PLIST src/shared/mac/Info.plist.in)
   set(SHARED_HELPER_INFO_PLIST src/shared/mac/helper-Info.plist.in)
 elseif(OS_WINDOWS)
-  # Shared Windows resources (version information, icons).
-  set(SHARED_RESOURCES_SRCS
-    src/shared/win/big.ico
-    src/shared/win/resource.h
-    src/shared/win/small.ico
-    )
-
-  # Manifest files used for executables.
-  set(SHARED_EXE_MANIFEST src/shared/win/shared.exe.manifest)
-  set(SHARED_COMPATIBILITY_MANIFEST src/shared/win/compatibility.manifest)
 endif()
 
 
@@ -225,16 +215,7 @@ macro(SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES target)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
     set_target_properties(${target} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
   elseif(OS_WINDOWS)
-    # Add the custom Windows manifest files to the executable.
-    add_custom_command(
-      TARGET ${target}
-      POST_BUILD
-      COMMAND "mt.exe" -nologo
-              -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_EXE_MANIFEST}\"
-                        \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_COMPATIBILITY_MANIFEST}\"
-              -outputresource:"${EXAMPLE_TARGET_OUT_DIR}/${target}.exe"\;\#1
-      COMMENT "Adding manifest..."
-      )
+
   endif()
 endmacro()
 

@@ -6,7 +6,7 @@
 
 #include "include/internal/cef_types.h"
 
-namespace scheme_handler {
+namespace app {
 
 const char kScheme[] = "client";
 const char kDomain[] = "tests";
@@ -16,4 +16,4 @@ const int kSchemeRegistrationOptions =
     CEF_SCHEME_OPTION_STANDARD | CEF_SCHEME_OPTION_SECURE |
     CEF_SCHEME_OPTION_CORS_ENABLED | CEF_SCHEME_OPTION_FETCH_ENABLED;
 
-}  // namespace scheme_handler
+}  // namespace app

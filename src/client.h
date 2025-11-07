@@ -7,7 +7,7 @@
 
 #include "include/cef_client.h"
 
-namespace minimal {
+namespace app {
 
 // Minimal implementation of client handlers.
 class Client : public CefClient,
@@ -34,6 +34,6 @@ class Client : public CefClient,
   DISALLOW_COPY_AND_ASSIGN(Client);
 };
 
-}  // namespace minimal
+}  // namespace app
 
 #endif  // CEF_EXAMPLES_MINIMAL_CLIENT_MINIMAL_H_

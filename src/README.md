@@ -20,9 +20,9 @@ The "scheme_handler" target is implemented as follows:
          * Register the custom scheme name in [OnRegisterCustomSchemes](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-request-handling).
  * Provide a concrete [CefClient](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefclient) implementation to handle [CefBrowser](https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-cefbrowser-and-cefframe) callbacks.
       * Uses a minimal client implementation based on the original minimal target.
- * Windows resource loading implementation in [resource_util_win_impl.cc](resource_util_win_impl.cc) and [resource.rc](win/resource.rc).
-     * Implements the [shared::GetResourceId](../shared/resource_util.h) method to map resource paths to BINARY ID values.
-     * Defines a BINARY resource to include [logo.png](resources/logo.png) and [scheme_handler.html](resources/scheme_handler.html) in the executable.
+ * Windows resource loading implementation in [resource_util_win.cc](../shared/resource_util_win.cc).
+     * Implements the [shared::GetResourceDir](../shared/resource_util.h) method to locate the resources directory alongside the executable.
+     * Copies [logo.png](resources/logo.png) and [scheme_handler.html](resources/scheme_handler.html) to a resources folder during build.
 
 ## Configuration
 
