@@ -126,4 +126,16 @@ bool IsAlloyStyleEnabled() {
   return enabled;
 }
 
+void ReplaceAll(std::string& str,
+                const std::string& from,
+                const std::string& to) {
+  if (from.empty())
+    return;  // 避免死循环
+  size_t start_pos = 0;
+  while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+    str.replace(start_pos, from.length(), to);
+    start_pos += to.length();  // 移动到替换后的末尾
+  }
+}
+
 }  // namespace shared

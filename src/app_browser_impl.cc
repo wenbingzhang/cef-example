@@ -21,7 +21,6 @@ std::string GetStartupURL() {
   ss << kScheme << "://" << kDomain << "/" << kFileName;
   return ss.str();
 }
-
 }  // namespace
 
 // Implementation of CefApp for the browser process.

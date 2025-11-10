@@ -15,11 +15,18 @@
 
 #include "scheme_strings.h"
 #include "shared/client_util.h"
+#include "shared/mime_types.h"
 #include "shared/resource_util.h"
 
 namespace app {
 
 namespace {
+
+std::string GetBaseUrl() {
+  std::stringstream ss;
+  ss << kScheme << "://" << kDomain << "/";
+  return ss.str();
+}
 
 // Implementation of the scheme handler for client:// requests.
 class ClientSchemeHandler : public CefResourceHandler {
@@ -44,11 +51,12 @@ class ClientSchemeHandler : public CefResourceHandler {
         handled = true;
         mime_type_ = "text/html";
       }
-    } else if (strstr(url.c_str(), "logo.png") != nullptr) {
-      // Load the response image.
-      if (shared::GetResourceString("logo.png", data_)) {
+    } else {
+      auto rFilename = url;
+      shared::ReplaceAll(rFilename, GetBaseUrl(), "");
+      if (shared::GetResourceString(rFilename, data_)) {
         handled = true;
-        mime_type_ = "image/png";
+        mime_type_ = shared::MimeTypes::getType(rFilename.c_str());
       }
     }
 

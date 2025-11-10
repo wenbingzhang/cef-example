@@ -10,7 +10,7 @@ namespace app {
 
 const char kScheme[] = "client";
 const char kDomain[] = "tests";
-const char kFileName[] = "scheme_handler.html";
+const char kFileName[] = "index.html";
 
 const int kSchemeRegistrationOptions =
     CEF_SCHEME_OPTION_STANDARD | CEF_SCHEME_OPTION_SECURE |

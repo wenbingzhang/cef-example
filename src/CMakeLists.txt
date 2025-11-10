@@ -8,61 +8,62 @@
 
 # Sources common to main and subprocess executables.
 set(EXAMPLE_COMMON_SRCS
-  scheme_strings.cc
-  scheme_strings.h
-  )
+        scheme_strings.cc
+        scheme_strings.h
+)
 
 # Main executable sources.
 set(EXAMPLE_SRCS
-  ${EXAMPLE_COMMON_SRCS}
-  client.cc
-  client.h
-  main.cc
-  app_browser_impl.cc
-  scheme_handler_impl.cc
-  scheme_handler_impl.h
-  )
+        ${EXAMPLE_COMMON_SRCS}
+        client.cc
+        client.h
+        main.cc
+        app_browser_impl.cc
+        scheme_handler_impl.cc
+        scheme_handler_impl.h
+)
 APPEND_PLATFORM_SOURCES(EXAMPLE_SRCS)
 
-if(OS_LINUX OR OS_WINDOWS)
-  # On Windows and Linux the same executable is used for all processes.
-  set(EXAMPLE_SRCS
-    ${EXAMPLE_SRCS}
-    app_subprocess_impl.cc
+if (OS_LINUX OR OS_WINDOWS)
+    # On Windows and Linux the same executable is used for all processes.
+    set(EXAMPLE_SRCS
+            ${EXAMPLE_SRCS}
+            app_subprocess_impl.cc
     )
-elseif(OS_MAC)
-  # On macOS a separate helper executable is used for subprocesses.
-  set(EXAMPLE_HELPER_SRCS
-    ${EXAMPLE_COMMON_SRCS}
-    process_helper_mac.cc
-    app_subprocess_impl.cc
+elseif (OS_MAC)
+    # On macOS a separate helper executable is used for subprocesses.
+    set(EXAMPLE_HELPER_SRCS
+            ${EXAMPLE_COMMON_SRCS}
+            process_helper_mac.cc
+            app_subprocess_impl.cc
     )
-endif()
+endif ()
 
 # Main executable resources.
 set(EXAMPLE_RESOURCES_SRCS
-  resources/logo.png
-  resources/scheme_handler.html
-  )
+        resources/logo.png
+        resources/index.html
+        resources/test.js
+)
 APPEND_PLATFORM_SOURCES(EXAMPLE_RESOURCES_SRCS)
 
-if(OS_MACOSX OR OS_WINDOWS)
-  # On macOS and Windows include the scheme_handler and shared resources.
-  if(OS_MAC)
-    set(EXAMPLE_SHARED_RESOURCES_SRCS
-      shared/mac/English.lproj/InfoPlist.strings
-      shared/mac/English.lproj/MainMenu.xib
-      shared/mac/shared.icns
-      )
-  elseif(OS_WINDOWS)
-    # No Windows-specific shared resources needed when using filesystem.
-  endif()
+if (OS_MACOSX OR OS_WINDOWS)
+    # On macOS and Windows include the scheme_handler and shared resources.
+    if (OS_MAC)
+        set(EXAMPLE_SHARED_RESOURCES_SRCS
+                shared/mac/English.lproj/InfoPlist.strings
+                shared/mac/English.lproj/MainMenu.xib
+                shared/mac/shared.icns
+        )
+    elseif (OS_WINDOWS)
+        # No Windows-specific shared resources needed when using filesystem.
+    endif ()
 
-  set(EXAMPLE_RESOURCES_SRCS
-    ${EXAMPLE_RESOURCES_SRCS}
-    ${EXAMPLE_SHARED_RESOURCES_SRCS}
+    set(EXAMPLE_RESOURCES_SRCS
+            ${EXAMPLE_RESOURCES_SRCS}
+            ${EXAMPLE_SHARED_RESOURCES_SRCS}
     )
-endif()
+endif ()
 
 
 #
@@ -71,162 +72,162 @@ endif()
 
 # Target executable names.
 set(EXAMPLE_TARGET "${PROJECT_NAME}")
-if(OS_MAC)
-  set(EXAMPLE_HELPER_TARGET "${PROJECT_NAME}_Helper")
-  set(EXAMPLE_HELPER_OUTPUT_NAME "${PROJECT_NAME} Helper")
-endif()
+if (OS_MAC)
+    set(EXAMPLE_HELPER_TARGET "${PROJECT_NAME}_Helper")
+    set(EXAMPLE_HELPER_OUTPUT_NAME "${PROJECT_NAME} Helper")
+endif ()
 
 
 #
 # Linux configuration.
 #
 
-if(OS_LINUX)
-  # Executable target.
-  add_executable(${EXAMPLE_TARGET} ${EXAMPLE_SRCS})
-  SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
-  add_dependencies(${EXAMPLE_TARGET} shared)
-  target_link_libraries(${EXAMPLE_TARGET} shared)
+if (OS_LINUX)
+    # Executable target.
+    add_executable(${EXAMPLE_TARGET} ${EXAMPLE_SRCS})
+    SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+    add_dependencies(${EXAMPLE_TARGET} shared)
+    target_link_libraries(${EXAMPLE_TARGET} shared)
 
-  # Copy resource files to the target output directory.
-  COPY_FILES("${EXAMPLE_TARGET}" "${EXAMPLE_RESOURCES_SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}_files")
-endif()
+    # Copy resource files to the target output directory.
+    COPY_FILES("${EXAMPLE_TARGET}" "${EXAMPLE_RESOURCES_SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}_files")
+endif ()
 
 
 #
 # Mac OS X configuration.
 #
 
-if(OS_MAC)
-  # Create source groups for Xcode.
-  SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_SRCS}")
-  SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_HELPER_SRCS}")
+if (OS_MAC)
+    # Create source groups for Xcode.
+    SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_SRCS}")
+    SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_HELPER_SRCS}")
 
-  # Output path for the main app bundle.
-  set(EXAMPLE_APP "${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}.app")
+    # Output path for the main app bundle.
+    set(EXAMPLE_APP "${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}.app")
 
-  # Variables referenced from the main Info.plist file.
-  set(EXECUTABLE_NAME "${EXAMPLE_TARGET}")
-  set(PRODUCT_NAME "${EXAMPLE_TARGET}")
-  set(VERSION_SHORT "1.0")
-
-  # Configure the Info.plist file.
-  set(INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/Info.plist.in"
-                 "${INFO_PLIST}" @ONLY)
-
-  # Main app bundle target.
-  add_executable(${EXAMPLE_TARGET} MACOSX_BUNDLE ${EXAMPLE_SRCS} ${EXAMPLE_RESOURCES_SRCS})
-  SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
-  add_dependencies(${EXAMPLE_TARGET} shared)
-  target_link_libraries(${EXAMPLE_TARGET} shared)
-  set_target_properties(${EXAMPLE_TARGET} PROPERTIES
-    RESOURCE "${EXAMPLE_RESOURCES_SRCS}"
-    MACOSX_BUNDLE_INFO_PLIST "${INFO_PLIST}"
-    )
-
-  # Copy the CEF framework into the Frameworks directory and create the necessary symlinks.
-  COPY_MAC_FRAMEWORK("${EXAMPLE_TARGET}" "${CEF_BINARY_DIR}" "${EXAMPLE_APP}")
-
-  # Save main app variables to restore later
-  set(_main_executable_name "${EXECUTABLE_NAME}")
-  set(_main_product_name "${PRODUCT_NAME}")
-  set(_main_version_short "${VERSION_SHORT}")
-
-  # Create the multiple Helper app bundle targets.
-  foreach(_suffix_list ${CEF_HELPER_APP_SUFFIXES})
-    # Convert to a list and extract the suffix values.
-    string(REPLACE ":" ";" _suffix_list ${_suffix_list})
-    list(GET _suffix_list 0 _name_suffix)
-    list(GET _suffix_list 1 _target_suffix)
-    list(GET _suffix_list 2 _plist_suffix)
-
-    # Define Helper target and output names.
-    set(_helper_target "${EXAMPLE_HELPER_TARGET}${_target_suffix}")
-    set(_helper_output_name "${EXAMPLE_HELPER_OUTPUT_NAME}${_name_suffix}")
-
-    # Create Helper-specific variants of the helper-Info.plist file. Do this
-    # manually because the configure_file command (which is executed as part of
-    # MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
-    # wrong values with multiple targets.
-    set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist")
-    set(EXECUTABLE_NAME "${_helper_output_name}")
-    set(PRODUCT_NAME "${_helper_output_name}")
-    set(BUNDLE_ID_SUFFIX "${_plist_suffix}")
+    # Variables referenced from the main Info.plist file.
+    set(EXECUTABLE_NAME "${EXAMPLE_TARGET}")
+    set(PRODUCT_NAME "${EXAMPLE_TARGET}")
     set(VERSION_SHORT "1.0")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/helper-Info.plist.in"
-                   "${_helper_info_plist}")
 
-    # Create Helper executable target.
-    add_executable(${_helper_target} MACOSX_BUNDLE ${EXAMPLE_HELPER_SRCS})
-    SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${_helper_target})
-    add_dependencies(${_helper_target} shared_helper)
-    target_link_libraries(${_helper_target} shared_helper)
-    set_target_properties(${_helper_target} PROPERTIES
-      MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
-      OUTPUT_NAME ${_helper_output_name}
-      )
+    # Configure the Info.plist file.
+    set(INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/Info.plist.in"
+            "${INFO_PLIST}" @ONLY)
 
-    # Restore main app variables for next iteration
-    set(EXECUTABLE_NAME "${_main_executable_name}")
-    set(PRODUCT_NAME "${_main_product_name}")
-    set(VERSION_SHORT "${_main_version_short}")
-
-    # Add the Helper as a dependency of the main executable target.
-    add_dependencies(${EXAMPLE_TARGET} "${_helper_target}")
-
-    # Copy the Helper app bundle into the Frameworks directory.
-    add_custom_command(
-      TARGET ${EXAMPLE_TARGET}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory
-              "${EXAMPLE_TARGET_OUT_DIR}/${_helper_output_name}.app"
-              "${EXAMPLE_APP}/Contents/Frameworks/${_helper_output_name}.app"
-      VERBATIM
-      )
-  endforeach()
-
-  # Manually process and copy over resource files.
-  # The Xcode generator can support this via the set_target_properties RESOURCE
-  # directive but that doesn't properly handle nested resource directories.
-  # Remove these prefixes from input file paths.
-  set(PREFIXES
-    "shared/mac/"
+    # Main app bundle target.
+    add_executable(${EXAMPLE_TARGET} MACOSX_BUNDLE ${EXAMPLE_SRCS} ${EXAMPLE_RESOURCES_SRCS})
+    SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+    add_dependencies(${EXAMPLE_TARGET} shared)
+    target_link_libraries(${EXAMPLE_TARGET} shared)
+    set_target_properties(${EXAMPLE_TARGET} PROPERTIES
+            RESOURCE "${EXAMPLE_RESOURCES_SRCS}"
+            MACOSX_BUNDLE_INFO_PLIST "${INFO_PLIST}"
     )
-  COPY_MAC_RESOURCES("${EXAMPLE_RESOURCES_SRCS}" "${PREFIXES}" "${EXAMPLE_TARGET}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_APP}")
-endif()
+
+    # Copy the CEF framework into the Frameworks directory and create the necessary symlinks.
+    COPY_MAC_FRAMEWORK("${EXAMPLE_TARGET}" "${CEF_BINARY_DIR}" "${EXAMPLE_APP}")
+
+    # Save main app variables to restore later
+    set(_main_executable_name "${EXECUTABLE_NAME}")
+    set(_main_product_name "${PRODUCT_NAME}")
+    set(_main_version_short "${VERSION_SHORT}")
+
+    # Create the multiple Helper app bundle targets.
+    foreach (_suffix_list ${CEF_HELPER_APP_SUFFIXES})
+        # Convert to a list and extract the suffix values.
+        string(REPLACE ":" ";" _suffix_list ${_suffix_list})
+        list(GET _suffix_list 0 _name_suffix)
+        list(GET _suffix_list 1 _target_suffix)
+        list(GET _suffix_list 2 _plist_suffix)
+
+        # Define Helper target and output names.
+        set(_helper_target "${EXAMPLE_HELPER_TARGET}${_target_suffix}")
+        set(_helper_output_name "${EXAMPLE_HELPER_OUTPUT_NAME}${_name_suffix}")
+
+        # Create Helper-specific variants of the helper-Info.plist file. Do this
+        # manually because the configure_file command (which is executed as part of
+        # MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
+        # wrong values with multiple targets.
+        set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist")
+        set(EXECUTABLE_NAME "${_helper_output_name}")
+        set(PRODUCT_NAME "${_helper_output_name}")
+        set(BUNDLE_ID_SUFFIX "${_plist_suffix}")
+        set(VERSION_SHORT "1.0")
+        configure_file("${CMAKE_CURRENT_SOURCE_DIR}/shared/mac/helper-Info.plist.in"
+                "${_helper_info_plist}")
+
+        # Create Helper executable target.
+        add_executable(${_helper_target} MACOSX_BUNDLE ${EXAMPLE_HELPER_SRCS})
+        SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${_helper_target})
+        add_dependencies(${_helper_target} shared_helper)
+        target_link_libraries(${_helper_target} shared_helper)
+        set_target_properties(${_helper_target} PROPERTIES
+                MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
+                OUTPUT_NAME ${_helper_output_name}
+        )
+
+        # Restore main app variables for next iteration
+        set(EXECUTABLE_NAME "${_main_executable_name}")
+        set(PRODUCT_NAME "${_main_product_name}")
+        set(VERSION_SHORT "${_main_version_short}")
+
+        # Add the Helper as a dependency of the main executable target.
+        add_dependencies(${EXAMPLE_TARGET} "${_helper_target}")
+
+        # Copy the Helper app bundle into the Frameworks directory.
+        add_custom_command(
+                TARGET ${EXAMPLE_TARGET}
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${EXAMPLE_TARGET_OUT_DIR}/${_helper_output_name}.app"
+                "${EXAMPLE_APP}/Contents/Frameworks/${_helper_output_name}.app"
+                VERBATIM
+        )
+    endforeach ()
+
+    # Manually process and copy over resource files.
+    # The Xcode generator can support this via the set_target_properties RESOURCE
+    # directive but that doesn't properly handle nested resource directories.
+    # Remove these prefixes from input file paths.
+    set(PREFIXES
+            "shared/mac/"
+    )
+    COPY_MAC_RESOURCES("${EXAMPLE_RESOURCES_SRCS}" "${PREFIXES}" "${EXAMPLE_TARGET}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_APP}")
+endif ()
 
 
 #
 # Windows configuration.
 #
 
-if(OS_WINDOWS)
-  # Create source groups for Visual Studio.
-  SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_SRCS}")
+if (OS_WINDOWS)
+    # Create source groups for Visual Studio.
+    SET_EXAMPLE_SOURCE_GROUPS("${EXAMPLE_SRCS}")
 
-  if(USE_SANDBOX)
-    # Shared library (DLL) target.
-    add_library(${EXAMPLE_TARGET} SHARED ${EXAMPLE_SRCS})
-    SET_EXAMPLE_LIBRARY_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+    if (USE_SANDBOX)
+        # Shared library (DLL) target.
+        add_library(${EXAMPLE_TARGET} SHARED ${EXAMPLE_SRCS})
+        SET_EXAMPLE_LIBRARY_TARGET_PROPERTIES(${EXAMPLE_TARGET})
 
-    # Copy and rename the bootstrap binary.
-    COPY_SINGLE_FILE(${EXAMPLE_TARGET} ${CEF_BINARY_DIR}/bootstrap.exe ${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}.exe)
-    if (CMAKE_GENERATOR MATCHES "Visual Studio")
-      # Make the bootstrap binary the default command for the Visual Studio debugger.
-      set_target_properties(${EXAMPLE_TARGET} PROPERTIES
-        VS_DEBUGGER_COMMAND "$<TARGET_FILE_DIR:${EXAMPLE_TARGET}>/${EXAMPLE_TARGET}.exe"
-      )
-    endif()
-  else()
-    # Executable target (sandbox disabled).
-    add_executable(${EXAMPLE_TARGET} WIN32 ${EXAMPLE_SRCS})
-    SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
-  endif()
+        # Copy and rename the bootstrap binary.
+        COPY_SINGLE_FILE(${EXAMPLE_TARGET} ${CEF_BINARY_DIR}/bootstrap.exe ${EXAMPLE_TARGET_OUT_DIR}/${EXAMPLE_TARGET}.exe)
+        if (CMAKE_GENERATOR MATCHES "Visual Studio")
+            # Make the bootstrap binary the default command for the Visual Studio debugger.
+            set_target_properties(${EXAMPLE_TARGET} PROPERTIES
+                    VS_DEBUGGER_COMMAND "$<TARGET_FILE_DIR:${EXAMPLE_TARGET}>/${EXAMPLE_TARGET}.exe"
+            )
+        endif ()
+    else ()
+        # Executable target (sandbox disabled).
+        add_executable(${EXAMPLE_TARGET} WIN32 ${EXAMPLE_SRCS})
+        SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES(${EXAMPLE_TARGET})
+    endif ()
 
-  add_dependencies(${EXAMPLE_TARGET} shared)
-  target_link_libraries(${EXAMPLE_TARGET} shared)
+    add_dependencies(${EXAMPLE_TARGET} shared)
+    target_link_libraries(${EXAMPLE_TARGET} shared)
 
-  # Copy resource files to the target output directory.
-  COPY_FILES("${EXAMPLE_TARGET}" "${EXAMPLE_RESOURCES_SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}/resources")
-endif()
+    # Copy resource files to the target output directory.
+    COPY_FILES("${EXAMPLE_TARGET}" "${EXAMPLE_RESOURCES_SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}/resources")
+endif ()

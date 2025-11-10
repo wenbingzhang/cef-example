@@ -33,6 +33,8 @@ bool IsViewsEnabled();
 // Returns true if Alloy style is enabled. Otherwise, Chrome style will be used.
 bool IsAlloyStyleEnabled();
 
+void ReplaceAll(std::string& str, const std::string& from, const std::string& to);
+
 }  // namespace shared
 
 #endif  // CEF_EXAMPLES_SHARED_CLIENT_BASE_H_
