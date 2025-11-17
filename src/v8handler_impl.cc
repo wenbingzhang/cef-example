@@ -1,42 +1,53 @@
 
 #include "v8handler_impl.h"
 
-#include <iostream>
+#include <chrono>
 
-V8HandlerImpl::V8HandlerImpl() {}
+V8HandlerImpl::V8HandlerImpl() = default;
 
-V8HandlerImpl::~V8HandlerImpl() {}
+V8HandlerImpl::~V8HandlerImpl() = default;
+
+CefRefPtr<V8HandlerImpl> V8HandlerImpl::instance() {
+  static CefRefPtr<V8HandlerImpl> instance = new V8HandlerImpl();
+  return instance;
+}
 
 // in CefV8HandlerImpl.cpp
 bool V8HandlerImpl::Execute(
-    const CefString& name  // JavaScript调用的C++方法名字
-    ,
-    CefRefPtr<CefV8Value> object  // JavaScript调用者对象
-    ,
-    const CefV8ValueList& arguments  // JavaScript传递的参数
-    ,
-    CefRefPtr<CefV8Value>& retval  // 需要返回给JavaScript的值设置给这个对象
-    ,
-    CefString& exception)  // 通知异常信息给JavaScript
+    const CefString& name,  // the name of the c method called by javascript
+    CefRefPtr<CefV8Value> object,  // javascript caller object
+    const CefV8ValueList& arguments,  // parameters passed by javascript
+    CefRefPtr<CefV8Value>& retval,  // The value returned to JavaScript needs to be set to this object
+    CefString& exception)  // notify javascript of the exception information
 {
   bool handle = false;
   if (name == "call" && arguments.size() == 2 && arguments[0]->IsString() &&
       arguments[1]->IsArray()) {
-    std::string funcName = arguments[0]->GetStringValue();
+    const std::string funcName = arguments[0]->GetStringValue();
     const CefRefPtr<CefV8Value>& argumentsArray = arguments[1];
 
-    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(funcName);
-    CefRefPtr<CefListValue> argsList = msg->GetArgumentList();
+    const CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(funcName);
+    const CefRefPtr<CefListValue> argsList = msg->GetArgumentList();
     argsList->SetString(0, funcName);
+
+    // TODO: 使用UUID
+    const std::string callId = std::to_string(
+        std::chrono::system_clock::now().time_since_epoch().count());
+
+    argsList->SetString(1, callId);
+
     for (int i = 0; i < argumentsArray->GetArrayLength(); i++) {
-      CefRefPtr<CefV8Value> val = argumentsArray->GetValue(i);
-      argsList->SetValue(i + 1, ConvertV8ToCefValue(val));
+      const CefRefPtr<CefV8Value> val = argumentsArray->GetValue(i);
+      argsList->SetValue(i + 2, ConvertV8ToCefValue(val));
     }
 
-    CefRefPtr<CefV8Context> ctx = CefV8Context::GetCurrentContext();
+    const CefRefPtr<CefV8Context> ctx = CefV8Context::GetCurrentContext();
     ctx->GetFrame()->SendProcessMessage(PID_BROWSER, msg);
 
-    retval = CefV8Value::CreateString("success");
+    const CefRefPtr<CefV8Value> promise = CefV8Value::CreatePromise();
+    m_promises[callId] = promise;
+    retval = promise;
+
     handle = true;
   }
 
@@ -45,6 +56,30 @@ bool V8HandlerImpl::Execute(
   }
 
   return true;
+}
+void V8HandlerImpl::HandleProcessMessage(CefRefPtr<CefProcessMessage> message) {
+  const auto args = message->GetArgumentList();
+  const auto id = args->GetString(0);
+  const auto isSuccess = args->GetBool(1);
+  const auto result = ConvertCefValueToV8(args->GetValue(2));
+
+  const auto it = m_promises.find(id.ToString());
+  if (it != m_promises.end()) {
+    auto promise = it->second;
+    if (promise && promise->IsPromise()) {
+      const CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+      if (context) {
+        context->Enter();
+        if (isSuccess) {
+          promise->ResolvePromise(result);
+        } else {
+          promise->RejectPromise("processing failed");
+        }
+        context->Exit();
+      }
+    }
+    m_promises.erase(it);
+  }
 }
 
 CefRefPtr<CefValue> V8HandlerImpl::ConvertV8ToCefValue(
@@ -92,4 +127,46 @@ CefRefPtr<CefValue> V8HandlerImpl::ConvertV8ToCefValue(
   }
 
   return cefVal;
+}
+
+CefRefPtr<CefV8Value> V8HandlerImpl::ConvertCefValueToV8(
+    CefRefPtr<CefValue> value) {
+  if (!value)
+    return CefV8Value::CreateNull();
+
+  switch (value->GetType()) {
+    case VTYPE_NULL:
+      return CefV8Value::CreateNull();
+    case VTYPE_BOOL:
+      return CefV8Value::CreateBool(value->GetBool());
+    case VTYPE_INT:
+      return CefV8Value::CreateInt(value->GetInt());
+    case VTYPE_DOUBLE:
+      return CefV8Value::CreateDouble(value->GetDouble());
+    case VTYPE_STRING:
+      return CefV8Value::CreateString(value->GetString());
+    case VTYPE_LIST: {
+      CefRefPtr<CefListValue> list = value->GetList();
+      CefRefPtr<CefV8Value> array = CefV8Value::CreateArray(list->GetSize());
+      for (size_t i = 0; i < list->GetSize(); i++) {
+        array->SetValue(i, ConvertCefValueToV8(list->GetValue(i)));
+      }
+      return array;
+    }
+    case VTYPE_DICTIONARY: {
+      CefRefPtr<CefDictionaryValue> dict = value->GetDictionary();
+      CefRefPtr<CefV8Value> object = CefV8Value::CreateObject(nullptr, nullptr);
+
+      CefDictionaryValue::KeyList keys;
+      dict->GetKeys(keys);
+
+      for (const auto& key : keys) {
+        object->SetValue(key, ConvertCefValueToV8(dict->GetValue(key)),
+                         V8_PROPERTY_ATTRIBUTE_NONE);
+      }
+      return object;
+    }
+    default:
+      return CefV8Value::CreateString("[UNSUPPORTED_TYPE]");
+  }
 }

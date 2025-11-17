@@ -24,19 +24,32 @@ class RenderProcessHandlerImpl : public CefRenderProcessHandler {
 
         "})();";
 
-    // Create an instance of my CefV8Handler object.
-    m_handler = new V8HandlerImpl();
     // Register the extension.
-    CefRegisterExtension("v8/app", extensionCode, m_handler);
+    CefRegisterExtension("v8/app", extensionCode, V8HandlerImpl::instance());
   }
 
   void OnContextReleased(CefRefPtr<CefBrowser> browser,
                          CefRefPtr<CefFrame> frame,
                          CefRefPtr<CefV8Context> context) override {}
 
- private:
-  CefRefPtr<V8HandlerImpl> m_handler;
+  // 处理从浏览器进程返回的消息
+  bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                CefRefPtr<CefFrame> frame,
+                                CefProcessId source_process,
+                                CefRefPtr<CefProcessMessage> message) override {
+    CefString messageName = message->GetName();
+    if (messageName == "js_callback") {
+      const CefRefPtr<CefV8Context> ctx = frame->GetV8Context();
+      ctx->Enter();
+      V8HandlerImpl::instance()->HandleProcessMessage(message);
+      ctx->Exit();
+      return true;
+    }
 
+    return false;
+  }
+
+ private:
   IMPLEMENT_REFCOUNTING(RenderProcessHandlerImpl);
 };
 }  // namespace app

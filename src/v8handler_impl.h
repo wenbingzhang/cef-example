@@ -18,10 +18,13 @@ class V8HandlerImpl : public CefV8Handler {
                const CefV8ValueList& arguments,
                CefRefPtr<CefV8Value>& retval,
                CefString& exception) override;
-  CefRefPtr<CefValue> ConvertV8ToCefValue(CefRefPtr<CefV8Value> val);
+  void HandleProcessMessage(CefRefPtr<CefProcessMessage> message);
+  static CefRefPtr<V8HandlerImpl> instance();
 
  private:
+  std::map<std::string, CefRefPtr<CefV8Value>> m_promises;
+  CefRefPtr<CefValue> ConvertV8ToCefValue(CefRefPtr<CefV8Value> val);
+  CefRefPtr<CefV8Value> ConvertCefValueToV8(CefRefPtr<CefValue> value);
 
   IMPLEMENT_REFCOUNTING(V8HandlerImpl);
 };
-
