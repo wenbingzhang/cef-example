@@ -6,7 +6,7 @@
 
 #include "shared/app_factory.h"
 
-#include "client.h"
+#include "client_impl.h"
 #include "scheme_handler_impl.h"
 #include "scheme_strings.h"
 #include "shared/browser_util.h"

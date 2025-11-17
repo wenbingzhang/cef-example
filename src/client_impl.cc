@@ -2,7 +2,9 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "client.h"
+#include "client_impl.h"
+
+#include <iostream>
 
 #include "shared/client_util.h"
 
@@ -29,6 +31,15 @@ bool Client::DoClose(CefRefPtr<CefBrowser> browser) {
 void Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
   // Call the default shared implementation.
   return shared::OnBeforeClose(browser);
+}
+bool Client::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                      CefRefPtr<CefFrame> frame,
+                                      CefProcessId source_process,
+                                      CefRefPtr<CefProcessMessage> message) {
+  std::cout << "[Renderer] Received: " << message->GetName().ToString()
+            << std::endl;
+
+  return true;
 }
 
 }  // namespace app

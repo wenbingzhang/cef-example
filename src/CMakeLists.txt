@@ -15,8 +15,8 @@ set(EXAMPLE_COMMON_SRCS
 # Main executable sources.
 set(EXAMPLE_SRCS
         ${EXAMPLE_COMMON_SRCS}
-        client.cc
-        client.h
+        client_impl.cc
+        client_impl.h
         main.cc
         app_browser_impl.cc
         scheme_handler_impl.cc
@@ -29,6 +29,9 @@ if (OS_LINUX OR OS_WINDOWS)
     set(EXAMPLE_SRCS
             ${EXAMPLE_SRCS}
             app_subprocess_impl.cc
+            render_handler_impl.hpp
+            v8handler_impl.h
+            v8handler_impl.cc
     )
 elseif (OS_MAC)
     # On macOS a separate helper executable is used for subprocesses.
@@ -36,6 +39,9 @@ elseif (OS_MAC)
             ${EXAMPLE_COMMON_SRCS}
             process_helper_mac.cc
             app_subprocess_impl.cc
+            render_handler_impl.hpp
+            v8handler_impl.h
+            v8handler_impl.cc
     )
 endif ()
 

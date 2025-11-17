@@ -6,13 +6,15 @@
 #define CEF_EXAMPLES_MINIMAL_CLIENT_MINIMAL_H_
 
 #include "include/cef_client.h"
+#include "include/cef_render_process_handler.h"
 
 namespace app {
 
 // Minimal implementation of client handlers.
 class Client : public CefClient,
                public CefDisplayHandler,
-               public CefLifeSpanHandler {
+               public CefLifeSpanHandler,
+               public CefRenderProcessHandler {
  public:
   Client();
 
@@ -28,6 +30,10 @@ class Client : public CefClient,
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
   bool DoClose(CefRefPtr<CefBrowser> browser) override;
   void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
+  bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                CefRefPtr<CefFrame> frame,
+                                CefProcessId source_process,
+                                CefRefPtr<CefProcessMessage> message) override;
 
  private:
   IMPLEMENT_REFCOUNTING(Client);

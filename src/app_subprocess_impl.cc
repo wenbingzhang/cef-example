@@ -2,14 +2,16 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#include "shared/app_factory.h"
+#include <iostream>
 
+#include "render_handler_impl.hpp"
 #include "scheme_strings.h"
+#include "shared/app_factory.h"
 
 namespace app {
 
 // Implementation of CefApp for all subprocesses.
-class SubprocessApp : public CefApp {
+class SubprocessApp : public CefApp, public CefRenderProcessHandler {
  public:
   SubprocessApp() {}
 
@@ -19,6 +21,10 @@ class SubprocessApp : public CefApp {
     // Register the custom scheme as standard and secure.
     // Must be the same implementation in all processes.
     registrar->AddCustomScheme(kScheme, kSchemeRegistrationOptions);
+  }
+
+  CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
+    return new RenderProcessHandlerImpl();
   }
 
  private:
