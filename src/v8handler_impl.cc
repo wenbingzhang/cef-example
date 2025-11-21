@@ -2,6 +2,9 @@
 #include "v8handler_impl.h"
 
 #include <chrono>
+#include <iostream>
+
+#include "shared/uuid_v4.hpp"
 
 V8HandlerImpl::V8HandlerImpl() = default;
 
@@ -30,9 +33,7 @@ bool V8HandlerImpl::Execute(
     const CefRefPtr<CefListValue> argsList = msg->GetArgumentList();
     argsList->SetString(0, funcName);
 
-    // TODO: 使用UUID
-    const std::string callId = std::to_string(
-        std::chrono::system_clock::now().time_since_epoch().count());
+    const std::string callId = shared::uuid_v4();
 
     argsList->SetString(1, callId);
 

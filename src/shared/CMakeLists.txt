@@ -27,6 +27,7 @@ set(SHARED_SRCS
         resource_util.h
         mime_types.cpp
         mime_types.h
+        uuid_v4.hpp
 )
 set(SHARED_SRCS_LINUX
         client_util_linux.cc
