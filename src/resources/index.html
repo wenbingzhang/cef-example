@@ -1,23 +1,73 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Scheme Handler Example</title>
+    <title>C++调用JS测试</title>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .cpp-call-display {
+            background-color: #e8f5e8;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #4caf50;
+        }
+        .js-call-display {
+            background-color: #e3f2fd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #2196f3;
+        }
+    </style>
 </head>
 <body bgcolor="white">
-The contents of this page page are served by the ClientSchemeHandler class handling the client:// protocol.
+<div class="container">
+    <h1>C++与JavaScript双向通信测试</h1>
 
-<br/><br/>You should see an image:
-<br/><img src="client://tests/logo.png">
-<script src="client://tests/test.js"></script>
+    <div class="test-section">
+        <h2>页面信息</h2>
+        <p>The contents of this page page are served by the ClientSchemeHandler class handling the client:// protocol.</p>
+        <br/>You should see an image:
+        <br/><img src="client://tests/logo.png">
+        <pre>$REQUEST$</pre>
+    </div>
 
-<pre>$REQUEST$</pre>
+    <div class="test-section">
+        <h2>JS调用C++测试</h2>
+        <div id="js-call-display" class="js-call-display">
+            <strong>等待JS调用C++的结果...</strong>
+        </div>
+    </div>
 
-<br/>Try the test form:
-<form method="POST" action="index.html">
-    <input type="text" name="field1">
-    <input type="text" name="field2">
-    <input type="submit">
-</form>
+    <div class="test-section">
+        <h2>C++调用JS测试</h2>
+        <div id="cpp-call-display" class="cpp-call-display">
+            <strong>等待C++主动调用JS...</strong>
+        </div>
+        <p>在3秒后，应该会看到C++主动调用JS的事件</p>
+    </div>
 
+    <div class="test-section">
+        <h2>表单测试</h2>
+        <form method="POST" action="index.html">
+            <input type="text" name="field1" placeholder="字段1">
+            <input type="text" name="field2" placeholder="字段2">
+            <input type="submit" value="提交">
+        </form>
+    </div>
+</div>
+
+<script src="client://tests/index.js"></script>
 </body>
 </html>

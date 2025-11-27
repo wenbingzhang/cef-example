@@ -24,6 +24,8 @@ bool V8HandlerImpl::Execute(
     CefString& exception)  // notify javascript of the exception information
 {
   bool handle = false;
+
+  // 原有的JS调用C++功能
   if (name == "call" && arguments.size() == 2 && arguments[0]->IsString() &&
       arguments[1]->IsArray()) {
     const std::string funcName = arguments[0]->GetStringValue();
@@ -52,34 +54,80 @@ bool V8HandlerImpl::Execute(
     handle = true;
   }
 
+  // 新增：JS事件监听器注册功能
+  else if (name == "addEventListener" && arguments.size() == 2 &&
+           arguments[0]->IsString() && arguments[1]->IsFunction()) {
+    const std::string eventName = arguments[0]->GetStringValue();
+    const CefRefPtr<CefV8Value> callback = arguments[1];
+
+    m_eventListeners[eventName] = callback;
+    retval = CefV8Value::CreateBool(true);
+    handle = true;
+  }
+
+  // 新增：JS移除事件监听器功能
+  else if (name == "removeEventListener" && arguments.size() == 1 &&
+           arguments[0]->IsString()) {
+    const std::string eventName = arguments[0]->GetStringValue();
+
+    auto it = m_eventListeners.find(eventName);
+    if (it != m_eventListeners.end()) {
+      m_eventListeners.erase(it);
+      retval = CefV8Value::CreateBool(true);
+    } else {
+      retval = CefV8Value::CreateBool(false);
+    }
+    handle = true;
+  }
+
   if (!handle) {
-    exception = "not implement function";
+    exception = "not implement function: " + name.ToString();
   }
 
   return true;
 }
 void V8HandlerImpl::HandleProcessMessage(CefRefPtr<CefProcessMessage> message) {
+  const std::string messageName = message->GetName();
   const auto args = message->GetArgumentList();
-  const auto id = args->GetString(0);
-  const auto isSuccess = args->GetBool(1);
-  const auto result = ConvertCefValueToV8(args->GetValue(2));
 
-  const auto it = m_promises.find(id.ToString());
-  if (it != m_promises.end()) {
-    auto promise = it->second;
-    if (promise && promise->IsPromise()) {
-      const CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
-      if (context) {
-        context->Enter();
-        if (isSuccess) {
-          promise->ResolvePromise(result);
-        } else {
-          promise->RejectPromise("processing failed");
+  // 处理JS调用C++的响应消息
+  if (messageName == "js_callback") {
+    const auto id = args->GetString(0);
+    const auto isSuccess = args->GetBool(1);
+    const auto result = ConvertCefValueToV8(args->GetValue(2));
+
+    const auto it = m_promises.find(id.ToString());
+    if (it != m_promises.end()) {
+      auto promise = it->second;
+      if (promise && promise->IsPromise()) {
+        const CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+        if (context) {
+          context->Enter();
+          if (isSuccess) {
+            promise->ResolvePromise(result);
+          } else {
+            promise->RejectPromise("processing failed");
+          }
+          context->Exit();
         }
-        context->Exit();
+      }
+      m_promises.erase(it);
+    }
+  }
+  // 处理C++调用JS的消息
+  else if (messageName == "cpp_call_js") {
+    const std::string eventName = args->GetString(0);
+    std::vector<std::string> callArgs;
+
+    // 提取参数
+    for (size_t i = 1; i < args->GetSize(); i++) {
+      if (args->GetValue(i)->GetType() == VTYPE_STRING) {
+        callArgs.push_back(args->GetString(i));
       }
     }
-    m_promises.erase(it);
+
+    // 调用JavaScript函数
+    CallJavaScript(eventName, callArgs);
   }
 }
 
@@ -169,5 +217,27 @@ CefRefPtr<CefV8Value> V8HandlerImpl::ConvertCefValueToV8(
     }
     default:
       return CefV8Value::CreateString("[UNSUPPORTED_TYPE]");
+  }
+}
+
+// 新增：C++调用JS的实现
+void V8HandlerImpl::CallJavaScript(const std::string& eventName, const std::vector<std::string>& args) {
+  auto it = m_eventListeners.find(eventName);
+  if (it != m_eventListeners.end() && it->second && it->second->IsFunction()) {
+    const CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+    if (context) {
+      context->Enter();
+
+      // 准备参数
+      CefV8ValueList v8Args;
+      for (const auto& arg : args) {
+        v8Args.push_back(CefV8Value::CreateString(arg));
+      }
+
+      // 执行JavaScript回调函数
+      it->second->ExecuteFunction(nullptr, v8Args);
+
+      context->Exit();
+    }
   }
 }

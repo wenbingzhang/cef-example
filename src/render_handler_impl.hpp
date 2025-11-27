@@ -22,6 +22,16 @@ class RenderProcessHandlerImpl : public CefRenderProcessHandler {
         "    return call(name, arguments);"
         "  };"
 
+        "  app.addEventListener = function(name, callback) {"
+        "    native function addEventListener();"
+        "    return addEventListener(name, callback);"
+        "  };"
+
+        "  app.removeEventListener = function(name) {"
+        "    native function removeEventListener();"
+        "    return removeEventListener(name);"
+        "  };"
+
         "})();";
 
     // Register the extension.
@@ -38,7 +48,17 @@ class RenderProcessHandlerImpl : public CefRenderProcessHandler {
                                 CefProcessId source_process,
                                 CefRefPtr<CefProcessMessage> message) override {
     CefString messageName = message->GetName();
+
+    // 处理JS调用C++的响应消息
     if (messageName == "js_callback") {
+      const CefRefPtr<CefV8Context> ctx = frame->GetV8Context();
+      ctx->Enter();
+      V8HandlerImpl::instance()->HandleProcessMessage(message);
+      ctx->Exit();
+      return true;
+    }
+    // 处理C++调用JS的消息
+    else if (messageName == "cpp_call_js") {
       const CefRefPtr<CefV8Context> ctx = frame->GetV8Context();
       ctx->Enter();
       V8HandlerImpl::instance()->HandleProcessMessage(message);

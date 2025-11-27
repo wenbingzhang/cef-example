@@ -49,7 +49,7 @@ endif ()
 set(EXAMPLE_RESOURCES_SRCS
         resources/logo.png
         resources/index.html
-        resources/test.js
+        resources/index.js
 )
 APPEND_PLATFORM_SOURCES(EXAMPLE_RESOURCES_SRCS)
 

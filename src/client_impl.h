@@ -5,6 +5,9 @@
 #ifndef CEF_EXAMPLES_MINIMAL_CLIENT_MINIMAL_H_
 #define CEF_EXAMPLES_MINIMAL_CLIENT_MINIMAL_H_
 
+#include <vector>
+#include <string>
+#include "include/cef_browser.h"
 #include "include/cef_client.h"
 #include "include/cef_render_process_handler.h"
 
@@ -35,7 +38,13 @@ class Client : public CefClient,
                                 CefProcessId source_process,
                                 CefRefPtr<CefProcessMessage> message) override;
 
+  // 新增：C++主动调用JS的接口
+  void CallJavaScript(const std::string& eventName, const std::vector<std::string>& args);
+
  private:
+  // 保存浏览器引用
+  CefRefPtr<CefBrowser> m_browser;
+
   IMPLEMENT_REFCOUNTING(Client);
   DISALLOW_COPY_AND_ASSIGN(Client);
 };

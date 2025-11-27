@@ -21,8 +21,12 @@ class V8HandlerImpl : public CefV8Handler {
   void HandleProcessMessage(CefRefPtr<CefProcessMessage> message);
   static CefRefPtr<V8HandlerImpl> instance();
 
+  // 新增：C++调用JS的方法
+  void CallJavaScript(const std::string& eventName, const std::vector<std::string>& args);
+
  private:
   std::map<std::string, CefRefPtr<CefV8Value>> m_promises;
+  std::map<std::string, CefRefPtr<CefV8Value>> m_eventListeners;
   CefRefPtr<CefValue> ConvertV8ToCefValue(CefRefPtr<CefV8Value> val);
   CefRefPtr<CefV8Value> ConvertCefValueToV8(CefRefPtr<CefValue> value);
 
