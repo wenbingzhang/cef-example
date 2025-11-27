@@ -12,7 +12,7 @@
 
 namespace app {
 
-Client::Client() = default;
+Client::Client() : m_shouldStopTimer(false) {}
 
 void Client::OnTitleChange(CefRefPtr<CefBrowser> browser,
                            const CefString& title) {
@@ -28,20 +28,25 @@ void Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
   m_browser = browser;
 
   // 启动一个定时器，演示C++主动调用JS
-  std::thread([this]() {
+  m_timerThread = std::thread([this]() {
     // 等待5秒让页面完全加载
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    for (int i = 0; i < 2 && !m_shouldStopTimer; ++i) {
+      if (i > 0) {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+      }
 
-    // 主动调用JavaScript
-    std::vector<std::string> args = {"来自C++的消息", "这是参数2", "时间戳:" + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())};
-    CallJavaScript("cppEvent", args);
+      if (m_shouldStopTimer) break;
 
-    // 再过5秒再次调用
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    std::vector<std::string> args2 = {"这是第二次调用", "C++->JS通信", "成功!"};
-    CallJavaScript("cppEvent", args2);
-
-  }).detach();
+      // 主动调用JavaScript
+      if (i == 0) {
+        std::vector<std::string> args = {"来自C++的消息", "这是参数2", "时间戳:" + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())};
+        CallJavaScript("cppEvent", args);
+      } else {
+        std::vector<std::string> args2 = {"这是第二次调用", "C++->JS通信", "成功!"};
+        CallJavaScript("cppEvent", args2);
+      }
+    }
+  });
 }
 
 bool Client::DoClose(CefRefPtr<CefBrowser> browser) {
@@ -50,6 +55,17 @@ bool Client::DoClose(CefRefPtr<CefBrowser> browser) {
 }
 
 void Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
+  // 停止定时器线程
+  m_shouldStopTimer = true;
+
+  // 等待定时器线程完成（最多等待1秒）
+  if (m_timerThread.joinable()) {
+    m_timerThread.join();
+  }
+
+  // 清理浏览器引用
+  m_browser = nullptr;
+
   // Call the default shared implementation.
   return shared::OnBeforeClose(browser);
 }
@@ -92,7 +108,8 @@ bool Client::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
     CefRefPtr<CefValue> result = CefValue::Create();
 
-    std::thread t([frame, funcName, args, response, responseArgs, result]() {
+    // 启动一个线程来处理耗时操作，但需要正确管理生命周期
+    std::thread workerThread([frame, funcName, args, response, responseArgs, result]() {
       if (funcName == "hello") {
         const std::string name = args->GetString(2);
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -107,7 +124,9 @@ bool Client::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
       // 发送响应到渲染进程
       frame->SendProcessMessage(PID_RENDERER, response);
     });
-    t.detach();
+
+    // 使用detach而不是join，避免阻塞消息处理
+    workerThread.detach();
   }
 
   return true;

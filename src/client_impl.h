@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <string>
+#include <thread>
+#include <atomic>
 #include "include/cef_browser.h"
 #include "include/cef_client.h"
 #include "include/cef_render_process_handler.h"
@@ -44,6 +46,10 @@ class Client : public CefClient,
  private:
   // 保存浏览器引用
   CefRefPtr<CefBrowser> m_browser;
+
+  // 管理定时器线程
+  std::thread m_timerThread;
+  std::atomic<bool> m_shouldStopTimer;
 
   IMPLEMENT_REFCOUNTING(Client);
   DISALLOW_COPY_AND_ASSIGN(Client);
