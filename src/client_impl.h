@@ -22,6 +22,7 @@ class Client : public CefClient,
                public CefRenderProcessHandler {
  public:
   Client();
+  ~Client();
 
   // CefClient methods:
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
