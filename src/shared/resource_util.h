@@ -10,10 +10,6 @@
 #include "include/cef_resource_handler.h"
 #include "include/cef_stream.h"
 
-#if defined(OS_WIN)
-#include "include/wrapper/cef_resource_manager.h"
-#endif
-
 namespace shared {
 
 // This file provides functionality for resource loading. On Linux, macOS, and Windows
@@ -40,14 +36,6 @@ std::string GetResourcePath(const std::string& url);
 
 // Determine the mime type based on |resource_path|'s file extension.
 std::string GetMimeType(const std::string& resource_path);
-
-#if defined(OS_WIN)
-// Create a new provider for loading file resources on Windows. Only URLs
-// beginning with |root_url| will be handled by this provider. See the
-// "resource_manager" target for example usage.
-CefResourceManager::Provider* CreateBinaryResourceProvider(
-    const std::string& root_url);
-#endif  // defined(OS_WIN)
 
 // Retrieve |resource_path| contents as a std::string. Returns false if the
 // resource is not found.
