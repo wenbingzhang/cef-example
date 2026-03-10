@@ -196,9 +196,9 @@ CefRefPtr<CefV8Value> V8HandlerImpl::ConvertCefValueToV8(
       return CefV8Value::CreateString(value->GetString());
     case VTYPE_LIST: {
       CefRefPtr<CefListValue> list = value->GetList();
-      CefRefPtr<CefV8Value> array = CefV8Value::CreateArray(list->GetSize());
+      CefRefPtr<CefV8Value> array = CefV8Value::CreateArray(static_cast<int>(list->GetSize()));
       for (size_t i = 0; i < list->GetSize(); i++) {
-        array->SetValue(i, ConvertCefValueToV8(list->GetValue(i)));
+        array->SetValue(static_cast<int>(i), ConvertCefValueToV8(list->GetValue(i)));
       }
       return array;
     }
