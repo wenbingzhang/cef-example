@@ -1,0 +1,138 @@
+name: Multi-Platform Build
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  # macOS Build (x64)
+  build-macos-x64:
+    runs-on: macos-13
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        brew install cmake ninja || true
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release --parallel $(sysctl -n hw.ncpu)
+
+    - name: Upload build artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-x64-build-logs
+        path: build/CMakeFiles/*.log
+        retention-days: 7
+
+  # macOS Build (ARM64)
+  build-macos-arm64:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        brew install cmake ninja || true
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release --parallel $(sysctl -n hw.ncpu)
+
+    - name: Upload build artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-arm64-build-logs
+        path: build/CMakeFiles/*.log
+        retention-days: 7
+
+  # Windows Build (x64)
+  build-windows-x64:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Configure CMake
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path build
+        cd build
+        cmake .. -A x64
+
+    - name: Build
+      shell: pwsh
+      run: |
+        cd build
+        cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
+
+    - name: Upload build artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-x64-build-logs
+        path: build/CMakeFiles/*.log
+        retention-days: 7
+
+  # Windows Build (Win32)
+  build-windows-x86:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Configure CMake
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path build
+        cd build
+        cmake .. -A Win32
+
+    - name: Build
+      shell: pwsh
+      run: |
+        cd build
+        cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
+
+    - name: Upload build artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-x86-build-logs
+        path: build/CMakeFiles/*.log
+        retention-days: 7
