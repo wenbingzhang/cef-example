@@ -35,7 +35,24 @@ jobs:
           cd build
           cmake --build . --config Release --parallel $(sysctl -n hw.ncpu)
 
+    - name: Package artifacts
+      run: |
+        cd build
+        mkdir -p package
+        if [ -d "Release/cef.app" ]; then
+          cp -R Release/cef.app package/
+        elif [ -d "cef.app" ]; then
+          cp -R cef.app package/
+        fi
+
     - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cef-macos-x64
+        path: build/package/
+        retention-days: 7
+
+    - name: Upload build logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
@@ -71,7 +88,24 @@ jobs:
           cd build
           cmake --build . --config Release --parallel $(sysctl -n hw.ncpu)
 
+    - name: Package artifacts
+      run: |
+        cd build
+        mkdir -p package
+        if [ -d "Release/cef.app" ]; then
+          cp -R Release/cef.app package/
+        elif [ -d "cef.app" ]; then
+          cp -R cef.app package/
+        fi
+
     - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cef-macos-arm64
+        path: build/package/
+        retention-days: 7
+
+    - name: Upload build logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
@@ -107,7 +141,51 @@ jobs:
           cd build
           cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
 
+    - name: Package artifacts
+      shell: pwsh
+      run: |
+        cd build
+        New-Item -ItemType Directory -Force -Path package
+
+        # Copy executable
+        if (Test-Path "Release/cef.exe") {
+          Copy-Item "Release/cef.exe" package/
+        }
+
+        # Copy CEF DLLs from third_party/cef
+        $cefDir = Get-ChildItem -Path "../third_party/cef" -Filter "cef_binary_*_windows64" -Directory | Select-Object -First 1
+        if ($cefDir) {
+          $cefReleaseDir = Join-Path $cefDir.FullName "Release"
+          if (Test-Path $cefReleaseDir) {
+            Copy-Item "$cefReleaseDir/*.dll" package/
+            Copy-Item "$cefReleaseDir/*.bin" package/
+            Copy-Item "$cefReleaseDir/*.json" package/
+          }
+        }
+
+        # Copy CEF resources
+        $cefResourceDir = Join-Path $cefDir.FullName "Resources"
+        if (Test-Path $cefResourceDir) {
+          Copy-Item "$cefResourceDir/*.pak" package/
+          Copy-Item "$cefResourceDir/*.dat" package/
+          if (Test-Path "$cefResourceDir/locales") {
+            Copy-Item -Recurse "$cefResourceDir/locales" package/
+          }
+        }
+
+        # Copy application resources
+        if (Test-Path "Release/resources") {
+          Copy-Item -Recurse "Release/resources" package/
+        }
+
     - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cef-windows-x64
+        path: build/package/
+        retention-days: 7
+
+    - name: Upload build logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
@@ -143,7 +221,51 @@ jobs:
           cd build
           cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
 
+    - name: Package artifacts
+      shell: pwsh
+      run: |
+        cd build
+        New-Item -ItemType Directory -Force -Path package
+
+        # Copy executable
+        if (Test-Path "Release/cef.exe") {
+          Copy-Item "Release/cef.exe" package/
+        }
+
+        # Copy CEF DLLs from third_party/cef (32-bit)
+        $cefDir = Get-ChildItem -Path "../third_party/cef" -Filter "cef_binary_*_windows32" -Directory | Select-Object -First 1
+        if ($cefDir) {
+          $cefReleaseDir = Join-Path $cefDir.FullName "Release"
+          if (Test-Path $cefReleaseDir) {
+            Copy-Item "$cefReleaseDir/*.dll" package/
+            Copy-Item "$cefReleaseDir/*.bin" package/
+            Copy-Item "$cefReleaseDir/*.json" package/
+          }
+        }
+
+        # Copy CEF resources
+        $cefResourceDir = Join-Path $cefDir.FullName "Resources"
+        if (Test-Path $cefResourceDir) {
+          Copy-Item "$cefResourceDir/*.pak" package/
+          Copy-Item "$cefResourceDir/*.dat" package/
+          if (Test-Path "$cefResourceDir/locales") {
+            Copy-Item -Recurse "$cefResourceDir/locales" package/
+          }
+        }
+
+        # Copy application resources
+        if (Test-Path "Release/resources") {
+          Copy-Item -Recurse "Release/resources" package/
+        }
+
     - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cef-windows-x86
+        path: build/package/
+        retention-days: 7
+
+    - name: Upload build logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
