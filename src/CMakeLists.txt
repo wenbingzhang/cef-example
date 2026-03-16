@@ -236,4 +236,10 @@ if (OS_WINDOWS)
 
     # Copy resource files to the target output directory.
     COPY_FILES("${EXAMPLE_TARGET}" "${EXAMPLE_RESOURCES_SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}/resources")
+
+    # Copy CEF binary files to the target output directory.
+    COPY_FILES("${EXAMPLE_TARGET}" "${CEF_BINARY_FILES}" "${CEF_BINARY_DIR}" "${EXAMPLE_TARGET_OUT_DIR}")
+
+    # Copy CEF resource files to the target output directory.
+    COPY_FILES("${EXAMPLE_TARGET}" "${CEF_RESOURCE_FILES}" "${CEF_RESOURCE_DIR}" "${EXAMPLE_TARGET_OUT_DIR}")
 endif ()

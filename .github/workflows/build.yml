@@ -147,35 +147,9 @@ jobs:
         cd build
         New-Item -ItemType Directory -Force -Path package
 
-        # Copy executable
-        if (Test-Path "Release/cef.exe") {
-          Copy-Item "Release/cef.exe" package/
-        }
-
-        # Copy CEF DLLs from third_party/cef
-        $cefDir = Get-ChildItem -Path "../third_party/cef" -Filter "cef_binary_*_windows64" -Directory | Select-Object -First 1
-        if ($cefDir) {
-          $cefReleaseDir = Join-Path $cefDir.FullName "Release"
-          if (Test-Path $cefReleaseDir) {
-            Copy-Item "$cefReleaseDir/*.dll" package/
-            Copy-Item "$cefReleaseDir/*.bin" package/
-            Copy-Item "$cefReleaseDir/*.json" package/
-          }
-        }
-
-        # Copy CEF resources
-        $cefResourceDir = Join-Path $cefDir.FullName "Resources"
-        if (Test-Path $cefResourceDir) {
-          Copy-Item "$cefResourceDir/*.pak" package/
-          Copy-Item "$cefResourceDir/*.dat" package/
-          if (Test-Path "$cefResourceDir/locales") {
-            Copy-Item -Recurse "$cefResourceDir/locales" package/
-          }
-        }
-
-        # Copy application resources
-        if (Test-Path "Release/resources") {
-          Copy-Item -Recurse "Release/resources" package/
+        # Copy all files from Release directory (CEF binaries and resources are already copied by CMake)
+        if (Test-Path "Release") {
+          Copy-Item -Recurse "Release/*" package/
         }
 
     - name: Upload build artifacts
@@ -227,35 +201,9 @@ jobs:
         cd build
         New-Item -ItemType Directory -Force -Path package
 
-        # Copy executable
-        if (Test-Path "Release/cef.exe") {
-          Copy-Item "Release/cef.exe" package/
-        }
-
-        # Copy CEF DLLs from third_party/cef (32-bit)
-        $cefDir = Get-ChildItem -Path "../third_party/cef" -Filter "cef_binary_*_windows32" -Directory | Select-Object -First 1
-        if ($cefDir) {
-          $cefReleaseDir = Join-Path $cefDir.FullName "Release"
-          if (Test-Path $cefReleaseDir) {
-            Copy-Item "$cefReleaseDir/*.dll" package/
-            Copy-Item "$cefReleaseDir/*.bin" package/
-            Copy-Item "$cefReleaseDir/*.json" package/
-          }
-        }
-
-        # Copy CEF resources
-        $cefResourceDir = Join-Path $cefDir.FullName "Resources"
-        if (Test-Path $cefResourceDir) {
-          Copy-Item "$cefResourceDir/*.pak" package/
-          Copy-Item "$cefResourceDir/*.dat" package/
-          if (Test-Path "$cefResourceDir/locales") {
-            Copy-Item -Recurse "$cefResourceDir/locales" package/
-          }
-        }
-
-        # Copy application resources
-        if (Test-Path "Release/resources") {
-          Copy-Item -Recurse "Release/resources" package/
+        # Copy all files from Release directory (CEF binaries and resources are already copied by CMake)
+        if (Test-Path "Release") {
+          Copy-Item -Recurse "Release/*" package/
         }
 
     - name: Upload build artifacts
