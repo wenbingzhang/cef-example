@@ -46,7 +46,10 @@ class ClientSchemeHandler : public CefResourceHandler {
         // Insert the request contents.
         const std::string& find = "$REQUEST$";
         const std::string& replace = shared::DumpRequestContents(request);
-        data_.replace(data_.find(find), find.size(), replace);
+        size_t pos = data_.find(find);
+        if (pos != std::string::npos) {
+          data_.replace(pos, find.size(), replace);
+        }
 
         handled = true;
         mime_type_ = "text/html";

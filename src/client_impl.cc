@@ -158,9 +158,13 @@ bool Client::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
     CefRefPtr<CefValue> result = CefValue::Create();
 
-    // 启动一个线程来处理耗时操作，但需要正确管理生命周期
+    // 注意：必须正确捕获 CefRefPtr<CefFrame> 以保证生命周期安全
+    // 使用 frame 的智能指针副本，而不是原始参数
+    CefRefPtr<CefFrame> frameRef = frame;
+
+    // 启动一个线程来处理耗时操作
     std::thread workerThread(
-        [frame, funcName, args, response, responseArgs, result]() {
+        [frameRef, funcName, args, response, responseArgs, result]() {
           if (funcName == "hello") {
             const std::string name = args->GetString(2);
             std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -172,7 +176,7 @@ bool Client::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
           responseArgs->SetValue(2, result);
 
           // 发送响应到渲染进程
-          frame->SendProcessMessage(PID_RENDERER, response);
+          frameRef->SendProcessMessage(PID_RENDERER, response);
         });
 
     // 使用detach而不是join，避免阻塞消息处理
