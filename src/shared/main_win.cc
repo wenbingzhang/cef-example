@@ -49,9 +49,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance, void* sandbox_info) {
   // Specify CEF global settings here.
   CefSettings settings;
 
-  if (!sandbox_info) {
-    settings.no_sandbox = true;
-  }
+  // Disable sandbox for portability
+  settings.no_sandbox = true;
+
+  // Set resource paths relative to executable directory
+  CefString(&settings.resources_dir_path).FromString(".");
+  CefString(&settings.locales_dir_path).FromString("./locales");
+  CefString(&settings.root_cache_path).FromString("./cache");
 
   // Initialize the CEF browser process. The first browser instance will be
   // created in CefBrowserProcessHandler::OnContextInitialized() after CEF has
